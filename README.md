@@ -90,4 +90,13 @@ re-attaches it. Only one instance can be on a page at a time.
 
 ## License
 
-EUPL-1.2
+[EUPL-1.2](LICENSE). The bundled DejaVu fonts (`tools/gen-placeholders/fonts`) have their own
+license.
+
+## Disclaimer
+
+This is a fan project, not affiliated with or endorsed by Soyuzmultfilm or the makers of the
+Elektronika handhelds. *Nu, pogodi!* and its characters belong to their respective owners; the
+license above covers this project's code and artwork, not those rights. No original ROM, scans
+or artwork are used: the rules are reimplemented and all graphics are drawn by the generator in
+`tools/gen-placeholders`.
