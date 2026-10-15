@@ -44,18 +44,25 @@ task check        # fmt + clippy; task check:wasm for the browser target
 
 ## Art
 
-All graphics are PNGs you can redraw:
+All graphics are PNGs you can redraw. The current set is drawn by `tools/gen-placeholders`
+after the real IM-02: grey shell, recessed silver panel, red buttons, and an LCD film with
+red-brown henhouses and green bushes.
 
 - `art/segments/*.png`: one image per LCD segment, drawn in solid ink on transparency. The game
-  tints them, so only the alpha channel matters.
-- `art/lcd_bg.png` (660×416): the printed LCD background (hens, ramps, grass).
-- `art/bezel.png` (1120×672): the device casing.
+  tints them, so only the alpha channel matters. `press_*.png` are the masks that shade held
+  buttons.
+- `art/lcd_bg.png` (660×416): the printed LCD film (henhouses, ramps, hens, bushes).
+- `art/lcd_glass.png` (660×416): drawn over the segments (frame shadow and glare).
+- `art/bezel.png` (1120×672): the device casing, including all printed labels.
 - `assets/layout.json`: where each segment's center sits on the LCD and where the bezel buttons
   are. Several segments can share one sprite (e.g. all eggs use `egg`).
 
-The current files are placeholders from `task art:placeholders`, which only writes missing files
-(`FORCE=1` regenerates everything). After editing, run `task atlas` (needs `atlas-packer`:
+`task art:placeholders` only writes missing files (`FORCE=1` regenerates everything, layout
+included). After editing, run `task atlas` (needs `atlas-packer`:
 `cargo install --git https://github.com/sunsided/game-toolkit atlas-packer`).
+
+The generator bundles DejaVu Sans Bold for the labels (`tools/gen-placeholders/fonts`, see its
+`LICENSE`).
 
 ## Embedding in SvelteKit
 

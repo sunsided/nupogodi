@@ -54,9 +54,9 @@ tasks:
       - cargo clippy -p nupogodi --target wasm32-unknown-unknown -- -D warnings
 
   art:placeholders:
-    desc: Draw missing placeholder art and layout.json (FORCE=1 overwrites everything)
+    desc: Draw missing art and layout.json (FORCE=1 overwrites everything)
     cmds:
-      - cargo run -q -p gen-placeholders -- {{if .FORCE}}--force{{end}}
+      - cargo run -q --release -p gen-placeholders -- {{if .FORCE}}--force{{end}}
 
   atlas:
     desc: Pack art/segments/*.png into assets/atlas.{png,json} and copy the bezel and LCD background
@@ -70,7 +70,7 @@ tasks:
       - assets/atlas.json
     cmds:
       - atlas-packer --input art/segments --output assets/atlas.png --metadata assets/atlas.json --padding 2
-      - cp art/bezel.png art/lcd_bg.png assets/
+      - cp art/bezel.png art/lcd_bg.png art/lcd_glass.png assets/
 
   web:
     desc: Run in the browser with live rebuild at http://localhost:8080 (needs trunk)
