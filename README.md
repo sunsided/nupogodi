@@ -36,6 +36,7 @@ The high score is kept in `localStorage` (web) or the user data dir (native).
 ## Build
 
 ```sh
+task setup        # once: wasm32 target, trunk, atlas-packer
 task run          # native
 task web          # http://localhost:8080, live rebuild (needs trunk + wasm32 target)
 task test         # logic tests
@@ -57,9 +58,8 @@ red-brown henhouses and green bushes.
 - `assets/layout.json`: where each segment's center sits on the LCD and where the bezel buttons
   are. Several segments can share one sprite (e.g. all eggs use `egg`).
 
-`task art:placeholders` only writes missing files (`FORCE=1` regenerates everything, layout
-included). After editing, run `task atlas` (needs `atlas-packer`:
-`cargo install --git https://github.com/sunsided/game-toolkit atlas-packer`).
+`task art` only writes missing files (`FORCE=1` regenerates everything, layout included).
+After editing, run `task atlas` (needs `atlas-packer`; `task setup` installs it).
 
 The generator bundles DejaVu Sans Bold for the labels (`tools/gen-placeholders/fonts`, see its
 `LICENSE`).

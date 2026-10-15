@@ -13,6 +13,40 @@ tasks:
       - task --list --sort=none
     silent: true
 
+  setup:
+    desc: Install the wasm target, trunk and atlas-packer (skips what's already there)
+    cmds:
+      - task: setup:wasm
+      - task: setup:trunk
+      - task: setup:atlas-packer
+
+  setup:wasm:
+    internal: true
+    status:
+      - rustup target list --installed | grep -qx wasm32-unknown-unknown
+    cmds:
+      - rustup target add wasm32-unknown-unknown
+
+  setup:trunk:
+    internal: true
+    status:
+      - command -v trunk
+    cmds:
+      - cargo install trunk --locked
+
+  setup:atlas-packer:
+    internal: true
+    status:
+      - command -v atlas-packer
+    cmds:
+      - cargo install --git https://github.com/sunsided/game-toolkit atlas-packer
+
+  clean:
+    desc: Remove build output (target/, dist/, .task/); generated art and assets stay
+    cmds:
+      - cargo clean
+      - rm -rf dist .task
+
   run:
     desc: Run natively (PROFILE=debug|release)
     cmds:
@@ -49,20 +83,20 @@ tasks:
     desc: Clippy for the browser target (wasm32-unknown-unknown)
     preconditions:
       - sh: rustup target list --installed | grep -qx wasm32-unknown-unknown
-        msg: "wasm target missing — run: rustup target add wasm32-unknown-unknown"
+        msg: "wasm target missing — run: task setup"
     cmds:
       - cargo clippy -p nupogodi --target wasm32-unknown-unknown -- -D warnings
 
-  art:placeholders:
+  art:
     desc: Draw missing art and layout.json (FORCE=1 overwrites everything)
     cmds:
       - cargo run -q --release -p gen-placeholders -- {{if .FORCE}}--force{{end}}
 
   atlas:
-    desc: Pack art/segments/*.png into assets/atlas.{png,json} and copy the bezel and LCD background
+    desc: Pack art/segments/*.png into assets/atlas.{png,json} and copy the bezel, LCD film and glass
     preconditions:
       - sh: command -v atlas-packer
-        msg: "atlas-packer not found — run: cargo install --git https://github.com/sunsided/game-toolkit atlas-packer"
+        msg: "atlas-packer not found — run: task setup"
     sources:
       - art/**/*.png
     generates:
@@ -76,9 +110,9 @@ tasks:
     desc: Run in the browser with live rebuild at http://localhost:8080 (needs trunk)
     preconditions: &web-preconditions
       - sh: command -v trunk
-        msg: "trunk not found — run: cargo install trunk --locked"
+        msg: "trunk not found — run: task setup"
       - sh: rustup target list --installed | grep -qx wasm32-unknown-unknown
-        msg: "wasm target missing — run: rustup target add wasm32-unknown-unknown"
+        msg: "wasm target missing — run: task setup"
     deps: [assets:manifest]
     cmds:
       - trunk serve {{.PROFILE_FLAG}} {{.CLI_ARGS}}
