@@ -5,3 +5,4 @@ atlas.png
 bezel.png
 layout.json
 lcd_bg.png
+lcd_glass.png

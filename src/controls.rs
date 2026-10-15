@@ -88,13 +88,6 @@ impl View2D {
             p[1] / self.zoom + self.top_left[1],
         ]
     }
-
-    pub fn to_screen(self, p: [f32; 2]) -> [f32; 2] {
-        [
-            (p[0] - self.top_left[0]) * self.zoom,
-            (p[1] - self.top_left[1]) * self.zoom,
-        ]
-    }
 }
 
 #[derive(Default)]
@@ -191,6 +184,15 @@ fn input_held(input: &Input, b: Button) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    impl View2D {
+        fn to_screen(self, p: [f32; 2]) -> [f32; 2] {
+            [
+                (p[0] - self.top_left[0]) * self.zoom,
+                (p[1] - self.top_left[1]) * self.zoom,
+            ]
+        }
+    }
 
     #[test]
     fn fit_letterboxes_and_round_trips() {
