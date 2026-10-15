@@ -1,0 +1,595 @@
+{
+  "buttons": {
+    "alarm_set": {
+      "circle": [
+        92,
+        130,
+        13
+      ]
+    },
+    "game_a": {
+      "rect": [
+        955,
+        96,
+        90,
+        30
+      ]
+    },
+    "game_b": {
+      "rect": [
+        955,
+        156,
+        90,
+        30
+      ]
+    },
+    "ramp_bl": {
+      "circle": [
+        120,
+        548,
+        50
+      ]
+    },
+    "ramp_br": {
+      "circle": [
+        1000,
+        548,
+        50
+      ]
+    },
+    "ramp_tl": {
+      "circle": [
+        120,
+        380,
+        50
+      ]
+    },
+    "ramp_tr": {
+      "circle": [
+        1000,
+        380,
+        50
+      ]
+    },
+    "time": {
+      "rect": [
+        955,
+        216,
+        90,
+        30
+      ]
+    },
+    "time_set": {
+      "circle": [
+        148,
+        130,
+        13
+      ]
+    }
+  },
+  "device": [
+    1120,
+    672
+  ],
+  "lcd_origin": [
+    230,
+    70
+  ],
+  "lcd_size": [
+    660,
+    416
+  ],
+  "segments": {
+    "alarm": {
+      "at": [
+        344.0,
+        96.0
+      ],
+      "sprite": "alarm"
+    },
+    "am": {
+      "at": [
+        344.0,
+        36.0
+      ],
+      "sprite": "am"
+    },
+    "arm_bl": {
+      "at": [
+        204.0,
+        290.0
+      ],
+      "sprite": "arm_bl"
+    },
+    "arm_br": {
+      "at": [
+        456.0,
+        290.0
+      ],
+      "sprite": "arm_br"
+    },
+    "arm_tl": {
+      "at": [
+        204.0,
+        200.0
+      ],
+      "sprite": "arm_tl"
+    },
+    "arm_tr": {
+      "at": [
+        456.0,
+        200.0
+      ],
+      "sprite": "arm_tr"
+    },
+    "bell_0": {
+      "at": [
+        222.0,
+        42.0
+      ],
+      "sprite": "bell_0"
+    },
+    "bell_1": {
+      "at": [
+        222.0,
+        42.0
+      ],
+      "sprite": "bell_1"
+    },
+    "broken_l": {
+      "at": [
+        160.0,
+        384.0
+      ],
+      "sprite": "broken"
+    },
+    "broken_r": {
+      "at": [
+        500.0,
+        384.0
+      ],
+      "sprite": "broken"
+    },
+    "chick_l_0": {
+      "at": [
+        118.0,
+        382.0
+      ],
+      "sprite": "chick"
+    },
+    "chick_l_1": {
+      "at": [
+        78.0,
+        382.0
+      ],
+      "sprite": "chick"
+    },
+    "chick_l_2": {
+      "at": [
+        36.0,
+        382.0
+      ],
+      "sprite": "chick"
+    },
+    "chick_r_0": {
+      "at": [
+        542.0,
+        382.0
+      ],
+      "sprite": "chick_r"
+    },
+    "chick_r_1": {
+      "at": [
+        582.0,
+        382.0
+      ],
+      "sprite": "chick_r"
+    },
+    "chick_r_2": {
+      "at": [
+        624.0,
+        382.0
+      ],
+      "sprite": "chick_r"
+    },
+    "colon": {
+      "at": [
+        441.0,
+        52.0
+      ],
+      "sprite": "colon"
+    },
+    "d0_a": {
+      "at": [
+        416.0,
+        28.0
+      ],
+      "sprite": "seg_a"
+    },
+    "d0_b": {
+      "at": [
+        428.0,
+        40.0
+      ],
+      "sprite": "seg_b"
+    },
+    "d0_c": {
+      "at": [
+        428.0,
+        64.0
+      ],
+      "sprite": "seg_c"
+    },
+    "d0_d": {
+      "at": [
+        416.0,
+        76.0
+      ],
+      "sprite": "seg_d"
+    },
+    "d0_e": {
+      "at": [
+        404.0,
+        64.0
+      ],
+      "sprite": "seg_e"
+    },
+    "d0_f": {
+      "at": [
+        404.0,
+        40.0
+      ],
+      "sprite": "seg_f"
+    },
+    "d0_g": {
+      "at": [
+        416.0,
+        52.0
+      ],
+      "sprite": "seg_g"
+    },
+    "d1_a": {
+      "at": [
+        466.0,
+        28.0
+      ],
+      "sprite": "seg_a"
+    },
+    "d1_b": {
+      "at": [
+        478.0,
+        40.0
+      ],
+      "sprite": "seg_b"
+    },
+    "d1_c": {
+      "at": [
+        478.0,
+        64.0
+      ],
+      "sprite": "seg_c"
+    },
+    "d1_d": {
+      "at": [
+        466.0,
+        76.0
+      ],
+      "sprite": "seg_d"
+    },
+    "d1_e": {
+      "at": [
+        454.0,
+        64.0
+      ],
+      "sprite": "seg_e"
+    },
+    "d1_f": {
+      "at": [
+        454.0,
+        40.0
+      ],
+      "sprite": "seg_f"
+    },
+    "d1_g": {
+      "at": [
+        466.0,
+        52.0
+      ],
+      "sprite": "seg_g"
+    },
+    "d2_a": {
+      "at": [
+        500.0,
+        28.0
+      ],
+      "sprite": "seg_a"
+    },
+    "d2_b": {
+      "at": [
+        512.0,
+        40.0
+      ],
+      "sprite": "seg_b"
+    },
+    "d2_c": {
+      "at": [
+        512.0,
+        64.0
+      ],
+      "sprite": "seg_c"
+    },
+    "d2_d": {
+      "at": [
+        500.0,
+        76.0
+      ],
+      "sprite": "seg_d"
+    },
+    "d2_e": {
+      "at": [
+        488.0,
+        64.0
+      ],
+      "sprite": "seg_e"
+    },
+    "d2_f": {
+      "at": [
+        488.0,
+        40.0
+      ],
+      "sprite": "seg_f"
+    },
+    "d2_g": {
+      "at": [
+        500.0,
+        52.0
+      ],
+      "sprite": "seg_g"
+    },
+    "egg_bl_0": {
+      "at": [
+        56.0,
+        230.0
+      ],
+      "sprite": "egg"
+    },
+    "egg_bl_1": {
+      "at": [
+        79.0,
+        242.0
+      ],
+      "sprite": "egg"
+    },
+    "egg_bl_2": {
+      "at": [
+        105.0,
+        253.0
+      ],
+      "sprite": "egg"
+    },
+    "egg_bl_3": {
+      "at": [
+        127.0,
+        266.0
+      ],
+      "sprite": "egg"
+    },
+    "egg_bl_4": {
+      "at": [
+        148.0,
+        280.0
+      ],
+      "sprite": "egg"
+    },
+    "egg_br_0": {
+      "at": [
+        604.0,
+        230.0
+      ],
+      "sprite": "egg"
+    },
+    "egg_br_1": {
+      "at": [
+        581.0,
+        242.0
+      ],
+      "sprite": "egg"
+    },
+    "egg_br_2": {
+      "at": [
+        555.0,
+        253.0
+      ],
+      "sprite": "egg"
+    },
+    "egg_br_3": {
+      "at": [
+        533.0,
+        266.0
+      ],
+      "sprite": "egg"
+    },
+    "egg_br_4": {
+      "at": [
+        512.0,
+        280.0
+      ],
+      "sprite": "egg"
+    },
+    "egg_tl_0": {
+      "at": [
+        64.0,
+        132.0
+      ],
+      "sprite": "egg"
+    },
+    "egg_tl_1": {
+      "at": [
+        84.0,
+        144.0
+      ],
+      "sprite": "egg"
+    },
+    "egg_tl_2": {
+      "at": [
+        108.0,
+        160.0
+      ],
+      "sprite": "egg"
+    },
+    "egg_tl_3": {
+      "at": [
+        129.0,
+        170.0
+      ],
+      "sprite": "egg"
+    },
+    "egg_tl_4": {
+      "at": [
+        148.0,
+        186.0
+      ],
+      "sprite": "egg"
+    },
+    "egg_tr_0": {
+      "at": [
+        596.0,
+        132.0
+      ],
+      "sprite": "egg"
+    },
+    "egg_tr_1": {
+      "at": [
+        576.0,
+        144.0
+      ],
+      "sprite": "egg"
+    },
+    "egg_tr_2": {
+      "at": [
+        552.0,
+        160.0
+      ],
+      "sprite": "egg"
+    },
+    "egg_tr_3": {
+      "at": [
+        531.0,
+        170.0
+      ],
+      "sprite": "egg"
+    },
+    "egg_tr_4": {
+      "at": [
+        512.0,
+        186.0
+      ],
+      "sprite": "egg"
+    },
+    "falling_l": {
+      "at": [
+        150.0,
+        318.0
+      ],
+      "sprite": "falling"
+    },
+    "falling_r": {
+      "at": [
+        510.0,
+        318.0
+      ],
+      "sprite": "falling"
+    },
+    "game_a": {
+      "at": [
+        62.0,
+        404.0
+      ],
+      "sprite": "game_a"
+    },
+    "game_b": {
+      "at": [
+        598.0,
+        404.0
+      ],
+      "sprite": "game_b"
+    },
+    "hare": {
+      "at": [
+        142.0,
+        62.0
+      ],
+      "sprite": "hare"
+    },
+    "hatched_l": {
+      "at": [
+        160.0,
+        378.0
+      ],
+      "sprite": "hatched"
+    },
+    "hatched_r": {
+      "at": [
+        500.0,
+        378.0
+      ],
+      "sprite": "hatched"
+    },
+    "miss_0": {
+      "at": [
+        382.0,
+        122.0
+      ],
+      "sprite": "miss"
+    },
+    "miss_1": {
+      "at": [
+        424.0,
+        122.0
+      ],
+      "sprite": "miss"
+    },
+    "miss_2": {
+      "at": [
+        466.0,
+        122.0
+      ],
+      "sprite": "miss"
+    },
+    "one_b": {
+      "at": [
+        384.0,
+        40.0
+      ],
+      "sprite": "seg_b"
+    },
+    "one_c": {
+      "at": [
+        384.0,
+        64.0
+      ],
+      "sprite": "seg_c"
+    },
+    "pm": {
+      "at": [
+        344.0,
+        66.0
+      ],
+      "sprite": "pm"
+    },
+    "wolf_l": {
+      "at": [
+        286.0,
+        282.0
+      ],
+      "sprite": "wolf_l"
+    },
+    "wolf_r": {
+      "at": [
+        374.0,
+        282.0
+      ],
+      "sprite": "wolf_r"
+    }
+  }
+}

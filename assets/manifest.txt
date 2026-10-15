@@ -1,0 +1,7 @@
+# Files the web build preloads before Game::init (one path per line, relative to assets/).
+# Regenerate with: task assets:manifest
+atlas.json
+atlas.png
+bezel.png
+layout.json
+lcd_bg.png

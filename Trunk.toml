@@ -1,0 +1,13 @@
+[build]
+target = "index.html"
+dist = "dist"
+# Relative URLs so the build works from any sub-path.
+public_url = "./"
+# Stable file names (nupogodi.js / nupogodi_bg.wasm) so a host page can import them directly.
+filehash = false
+
+[serve]
+port = 8080
+
+[watch]
+ignore = [".playwright-mcp", "art", "tools", "embed", "target"]

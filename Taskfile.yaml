@@ -1,0 +1,114 @@
+# https://taskfile.dev
+version: '3'
+
+vars:
+  PROFILE: '{{ .PROFILE | default "debug" }}'
+  PROFILE_FLAG: '{{ if eq .PROFILE "release" }}--release{{ end }}'
+  # Where `web:export` copies the browser build (e.g. a SvelteKit app's static/nupogodi).
+  DEST: '{{ .DEST | default "" }}'
+
+tasks:
+  default:
+    cmds:
+      - task --list --sort=none
+    silent: true
+
+  run:
+    desc: Run natively (PROFILE=debug|release)
+    cmds:
+      - cargo run -p nupogodi {{.PROFILE_FLAG}} -- {{.CLI_ARGS}}
+
+  build:
+    desc: Build (PROFILE=debug|release)
+    cmds:
+      - cargo build -p nupogodi {{.PROFILE_FLAG}} {{.CLI_ARGS}}
+
+  test:
+    desc: Run tests
+    cmds:
+      - cargo test --workspace {{.CLI_ARGS}}
+
+  fmt:
+    desc: Format sources
+    aliases: [format]
+    cmds:
+      - cargo fmt --all
+
+  lint:
+    desc: Clippy (warnings as errors)
+    cmds:
+      - cargo clippy --workspace --all-targets -- -D warnings
+
+  check:
+    desc: Format check + clippy
+    cmds:
+      - cargo fmt --all --check
+      - cargo clippy --workspace --all-targets -- -D warnings
+
+  check:wasm:
+    desc: Clippy for the browser target (wasm32-unknown-unknown)
+    preconditions:
+      - sh: rustup target list --installed | grep -qx wasm32-unknown-unknown
+        msg: "wasm target missing — run: rustup target add wasm32-unknown-unknown"
+    cmds:
+      - cargo clippy -p nupogodi --target wasm32-unknown-unknown -- -D warnings
+
+  art:placeholders:
+    desc: Draw missing placeholder art and layout.json (FORCE=1 overwrites everything)
+    cmds:
+      - cargo run -q -p gen-placeholders -- {{if .FORCE}}--force{{end}}
+
+  atlas:
+    desc: Pack art/segments/*.png into assets/atlas.{png,json} and copy the bezel and LCD background
+    preconditions:
+      - sh: command -v atlas-packer
+        msg: "atlas-packer not found — run: cargo install --git https://github.com/sunsided/game-toolkit atlas-packer"
+    sources:
+      - art/**/*.png
+    generates:
+      - assets/atlas.png
+      - assets/atlas.json
+    cmds:
+      - atlas-packer --input art/segments --output assets/atlas.png --metadata assets/atlas.json --padding 2
+      - cp art/bezel.png art/lcd_bg.png assets/
+
+  web:
+    desc: Run in the browser with live rebuild at http://localhost:8080 (needs trunk)
+    preconditions: &web-preconditions
+      - sh: command -v trunk
+        msg: "trunk not found — run: cargo install trunk --locked"
+      - sh: rustup target list --installed | grep -qx wasm32-unknown-unknown
+        msg: "wasm target missing — run: rustup target add wasm32-unknown-unknown"
+    deps: [assets:manifest]
+    cmds:
+      - trunk serve {{.PROFILE_FLAG}} {{.CLI_ARGS}}
+
+  web:build:
+    desc: Build for the browser into dist/ (PROFILE=release for shipping)
+    preconditions: *web-preconditions
+    deps: [assets:manifest]
+    cmds:
+      - trunk build {{.PROFILE_FLAG}} {{.CLI_ARGS}}
+
+  web:export:
+    desc: Release browser build copied to DEST (e.g. DEST=../my-site/static/nupogodi)
+    requires:
+      vars: [DEST]
+    preconditions: *web-preconditions
+    deps: [assets:manifest]
+    cmds:
+      # Own dist dir, so a running `task web` doesn't clobber it mid-copy.
+      - trunk build --release --dist target/web-release
+      - mkdir -p "{{.DEST}}"
+      - cp -r target/web-release/nupogodi.js target/web-release/nupogodi_bg.wasm target/web-release/assets "{{.DEST}}/"
+
+  assets:manifest:
+    desc: Regenerate assets/manifest.txt, the list of files the web build preloads
+    dir: assets
+    cmds:
+      - |
+        {
+          echo "# Files the web build preloads before Game::init (one path per line, relative to assets/)."
+          echo "# Regenerate with: task assets:manifest"
+          find . -type f ! -name manifest.txt ! -name '.*' | sed 's|^\./||' | LC_ALL=C sort
+        } > manifest.txt

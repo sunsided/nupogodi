@@ -1,0 +1,10 @@
+[package]
+name = "gen-placeholders"
+version = "0.1.0"
+edition = "2024"
+publish = false
+description = "Draws placeholder LCD segment art and writes the segment layout"
+
+[dependencies]
+image = { version = "0.25", default-features = false, features = ["png"] }
+serde_json = "1"

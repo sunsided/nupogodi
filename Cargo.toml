@@ -1,0 +1,33 @@
+[workspace]
+members = [".", "tools/gen-placeholders"]
+resolver = "3"
+
+[package]
+name = "nupogodi"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.95"
+description = "A clone of the Soviet Elektronika IM-02 \"Nu, pogodi!\" LCD handheld, built on game-toolkit"
+license = "EUPL-1.2"
+publish = false
+
+[dependencies]
+game-toolkit = "0.3"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+log = "0.4"
+
+# Native builds log via env_logger; on the web the toolkit logs to the browser console.
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+env_logger = "0.11"
+chrono = { version = "0.4", default-features = false, features = ["clock"] }
+dirs = "6"
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+js-sys = "0.3"
+web-sys = { version = "0.3", features = ["Window", "Document", "Element", "HtmlCanvasElement", "Storage"] }
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
