@@ -45,6 +45,9 @@ task test         # logic tests
 task check        # fmt + clippy; task check:wasm for the browser target
 ```
 
+Every push to `main` deploys the release browser build to GitHub Pages
+(`.github/workflows/pages.yml`).
+
 ## Art
 
 All graphics are PNGs you can redraw. The current set is drawn by `tools/gen-placeholders`
