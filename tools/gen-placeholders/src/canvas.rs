@@ -316,6 +316,22 @@ impl Canvas {
         }
     }
 
+    /// Scale every pixel's alpha by `f` (drawing coordinates of the pixel center).
+    pub fn fade(&mut self, f: impl Fn(f32, f32) -> f32) {
+        let (w, h) = self.img.dimensions();
+        for y in 0..h {
+            for x in 0..w {
+                let p = self.img.get_pixel_mut(x, y);
+                if p[3] == 0 {
+                    continue;
+                }
+                let u = x as f32 / SCALE + self.origin[0] + 0.5 / SCALE;
+                let v = y as f32 / SCALE + self.origin[1] + 0.5 / SCALE;
+                p[3] = (p[3] as f32 * f(u, v).clamp(0.0, 1.0)).round() as u8;
+            }
+        }
+    }
+
     /// Cut `s` out of what's drawn.
     pub fn erase(&mut self, s: &Shape) {
         for (x, y) in self.pixels_of(s) {

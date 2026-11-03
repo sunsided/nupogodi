@@ -16,6 +16,7 @@ mod bezel;
 mod canvas;
 mod lcd;
 mod text;
+mod wear;
 
 use std::path::{Path, PathBuf};
 

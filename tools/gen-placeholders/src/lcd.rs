@@ -10,6 +10,7 @@ use serde_json::{Map, Value, json};
 
 use crate::canvas::*;
 use crate::text::{self, Text};
+use crate::wear::{self, Dice, fbm};
 
 pub const W: u32 = 660;
 pub const H: u32 = 416;
@@ -594,6 +595,15 @@ pub fn background() -> RgbaImage {
         [base[0] + g, base[1] + g, base[2] + g, 1.0]
     });
 
+    // An old LCD: the polarizer has gone a little brown in one corner and the contrast is
+    // uneven across the film.
+    c.paint(&rect(0., 0., W as f32, H as f32), |x, y| {
+        let d = ((x - W as f32).powi(2) + (y - H as f32).powi(2)).sqrt() / 260.0;
+        let corner = (1.0 - d).max(0.0).powi(2) * 0.16;
+        let blotch = fbm(x, y, 90.0) * 0.05;
+        [0.42, 0.33, 0.16, corner + blotch]
+    });
+
     // Henhouses: posts, perches and ramps on both sides.
     both_sides(&mut c, |c| {
         c.fill(&rect(0., 36., 5., 290.), PRINT_RED);
@@ -784,6 +794,36 @@ pub fn glass() -> RgbaImage {
         let band = (-d * d).exp() * 0.10;
         let fall = 1.0 - (x + y) / (w + h);
         [1.0, 1.0, 1.0, (band + 0.04 * fall) * fall.max(0.3)]
+    });
+    // The window is scuffed: hairline scratches, dust caught under the frame, and a
+    // fingerprint smudge near the lower right where thumbs come off the buttons.
+    let mut dice = Dice::new(0x02);
+    let all_in = |_: f32, _: f32| true;
+    wear::scratches(
+        &mut c,
+        &mut dice,
+        [0., 0., w, h],
+        140,
+        [6., 60.],
+        0.85,
+        &all_in,
+    );
+    wear::dust(&mut c, &mut dice, [0., 0., w, h], 160);
+    for (x, y) in [
+        (6.0f32, 6.0f32),
+        (w - 6.0, 8.0),
+        (8.0, h - 6.0),
+        (w - 8.0, h - 6.0),
+    ] {
+        wear::dust(&mut c, &mut dice, [x - 6., y - 6., x + 6., y + 6.], 40);
+    }
+    let print_at = [w - 120., h - 90.];
+    c.paint(&ellipse(print_at, 46., 34., 0.5), move |x, y| {
+        let (dx, dy) = (x - print_at[0], y - print_at[1]);
+        let r = (dx * dx / 1.4 + dy * dy).sqrt();
+        let ridge = (r * 1.6 + fbm(x, y, 6.0) * 9.0).sin() * 0.5 + 0.5;
+        let fade = (1.0 - r / 40.0).max(0.0) * fbm(x + 50.0, y, 14.0);
+        [1., 1., 1., 0.045 * ridge * fade]
     });
     c.img
 }
