@@ -52,7 +52,8 @@ pub fn buttons() -> Value {
         m.insert(name.into(), json!({ "rect": r }));
     }
     for (name, y) in HOLES {
-        m.insert(name.into(), json!({ "circle": [ICON_X, y, HOLE_R + 4.] }));
+        // Twice the hole: it's a pin you'd poke with a fingertip.
+        m.insert(name.into(), json!({ "circle": [ICON_X, y, HOLE_R * 2.] }));
     }
     Value::Object(m)
 }

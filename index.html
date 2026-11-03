@@ -15,9 +15,26 @@
         height: min(100vh, calc(100vw * 672 / 1120)) !important;
         touch-action: none;
       }
+      /* Portrait phones get a device a quarter of the screen tall; ask for landscape. */
+      .rotate { display: none; }
+      @media (orientation: portrait) and (max-width: 700px) {
+        .rotate {
+          display: block;
+          position: fixed;
+          top: max(16px, calc(50% - 100vw * 672 / 1120 / 2 - 72px));
+          left: 16px;
+          right: 16px;
+          margin: 0;
+          color: #c9c9c3;
+          font: 600 16px/1.4 system-ui, sans-serif;
+          text-align: center;
+        }
+        .rotate span { display: block; font-size: 32px; line-height: 1.2; }
+      }
     </style>
   </head>
   <body>
     <canvas id="nupogodi" tabindex="0"></canvas>
+    <p class="rotate" aria-hidden="true"><span>⟳</span>Turn your phone sideways for bigger buttons</p>
   </body>
 </html>

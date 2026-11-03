@@ -45,7 +45,9 @@ impl Shape {
                 (p[0] - cx).powi(2) + (p[1] - cy).powi(2) <= r * r
             }
             Shape::Rect([x, y, w, h]) => {
-                p[0] >= x - 6.0 && p[0] <= x + w + 6.0 && p[1] >= y - 6.0 && p[1] <= y + h + 6.0
+                // The pills are small on a phone; generous slack (they're 70 apart).
+                let s = 12.0;
+                p[0] >= x - s && p[0] <= x + w + s && p[1] >= y - s && p[1] <= y + h + s
             }
         }
     }
