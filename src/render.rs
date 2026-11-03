@@ -7,9 +7,9 @@ use crate::atlas::Atlas;
 use crate::controls::{Button, View2D};
 use crate::layout::{Layout, Shape};
 
-/// Unlit segments are faintly visible on a real LCD; any stronger and the idle wolf and
-/// baskets read as a second character.
-const GHOST: [f32; 4] = [1.0, 1.0, 1.0, 0.022];
+/// Unlit segments are faintly visible on a real LCD. 0.045 made the idle wolf and baskets
+/// read as a second character on the old art; on the redrawn art 0.022–0.04 were too faint.
+const GHOST: [f32; 4] = [1.0, 1.0, 1.0, 0.06];
 const LIT: [f32; 4] = [1.0, 1.0, 1.0, 0.9];
 /// Lit segments cast a soft shadow onto the mirror behind the liquid crystal.
 const SHADOW: [f32; 4] = [1.0, 1.0, 1.0, 0.14];
