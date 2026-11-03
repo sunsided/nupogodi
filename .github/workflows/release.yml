@@ -31,7 +31,7 @@ jobs:
           toolchain: stable
           targets: wasm32-unknown-unknown
 
-      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      # No build cache: a release is built from scratch, never from a cache other runs wrote.
 
       - uses: taiki-e/install-action@8cca0918f8471c33515202b73f56ab27f2bed283 # v2.87.29
         with:
@@ -96,7 +96,7 @@ jobs:
     name: Announce on games.markusmayer.dev
     needs: [release]
     permissions: {}
-    uses: sunsided/games.markusmayer.dev/.github/workflows/announce.yml@0bbf9f1c165aaffe0ab4d49f05535241a807adf3 # main
+    uses: sunsided/games.markusmayer.dev/.github/workflows/announce.yml@efb547983f3b007bab781c2a16b7638ee745c2bc # main
     with:
       app-id: ${{ vars.GAMES_ANNOUNCE_APP_ID }}
     secrets:
