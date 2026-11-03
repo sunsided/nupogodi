@@ -109,13 +109,14 @@ jobs:
             --verify-tag
 
   # Needs the games announce GitHub App on games.markusmayer.dev: variable
-  # GAMES_ANNOUNCE_APP_ID, secret GAMES_ANNOUNCE_APP_PRIVATE_KEY. Pinned to a commit of
-  # that repository; move the pin when its announce.yml changes.
+  # GAMES_ANNOUNCE_APP_ID, secret GAMES_ANNOUNCE_APP_PRIVATE_KEY. Pinned to the commit of
+  # its announce-vN tag, which does not move as games are released there; a changed
+  # announce.yml gets a new tag to move to.
   announce:
     name: Announce on games.markusmayer.dev
     needs: [release]
     permissions: {}
-    uses: sunsided/games.markusmayer.dev/.github/workflows/announce.yml@efb547983f3b007bab781c2a16b7638ee745c2bc # main
+    uses: sunsided/games.markusmayer.dev/.github/workflows/announce.yml@6f56b15f7b599565451d42b0ccdfd72cc13f82a8 # announce-v1
     with:
       app-id: ${{ vars.GAMES_ANNOUNCE_APP_ID }}
     secrets:
