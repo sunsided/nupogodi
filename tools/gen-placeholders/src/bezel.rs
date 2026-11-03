@@ -8,6 +8,7 @@ use serde_json::{Value, json};
 use crate::canvas::*;
 use crate::lcd;
 use crate::text::{self, Text};
+use crate::wear::{self, Dice, fbm};
 
 pub const W: u32 = 1120;
 pub const H: u32 = 672;
@@ -30,9 +31,9 @@ const SOCKET_R: f32 = 44.;
 const DOME_R: f32 = 31.;
 /// Pill buttons: (name, center y, label).
 const PILLS: [(&str, f32, &str); 3] = [
-    ("game_a", 74., "игра А"),
-    ("game_b", 144., "игра Б"),
-    ("time", 214., "время"),
+    ("game_a", 74., "ИГРА А"),
+    ("game_b", 144., "ИГРА Б"),
+    ("time", 214., "ВРЕМЯ"),
 ];
 const PILL_X: f32 = 990.;
 const PILL: [f32; 2] = [64., 30.];
@@ -52,7 +53,8 @@ pub fn buttons() -> Value {
         m.insert(name.into(), json!({ "rect": r }));
     }
     for (name, y) in HOLES {
-        m.insert(name.into(), json!({ "circle": [ICON_X, y, HOLE_R + 4.] }));
+        // Twice the hole: it's a pin you'd poke with a fingertip.
+        m.insert(name.into(), json!({ "circle": [ICON_X, y, HOLE_R * 2.] }));
     }
     Value::Object(m)
 }
@@ -70,11 +72,32 @@ pub fn bezel() -> RgbaImage {
     c.shadow(&shell(), [0., 3.], 5., [0., 0., 0., 0.5]);
     c.paint(&shell(), |x, y| {
         let base = mix(hex(0xd6d7d2), hex(0xbdbeb8), y / h);
-        let g = (hash(x as i32, y as i32) - 0.5) * 0.015;
+        let g = (grain(x, y) - 0.5) * 0.015;
         [base[0] + g, base[1] + g, base[2] + g, 1.0]
+    });
+    // Forty years of sunlight and hands: the grey plastic has yellowed in blotches.
+    c.paint(&shell(), |x, y| {
+        let n = fbm(x, y, 140.0);
+        [0.78, 0.66, 0.36, 0.05 + 0.09 * n]
     });
     c.inner_shadow(&shell(), [0., 2.5], 3., [1., 1., 1., 0.7]);
     c.inner_shadow(&shell(), [0., -3.], 4., [0., 0., 0., 0.35]);
+    let mut dice = Dice::new(0x1984);
+    let on_shell = |x: f32, y: f32| shell().contains(x, y);
+    wear::scratches(
+        &mut c,
+        &mut dice,
+        [8., 6., w - 8., h - 8.],
+        420,
+        [4., 34.],
+        0.35,
+        &on_shell,
+    );
+    // The rim is rubbed shiny where it rests in the hand and slides across tables.
+    c.paint(&round_frame(8., 6., w - 16., h - 14., 40., 5.), |x, y| {
+        let n = fbm(x, y, 18.0);
+        [1., 1., 1., 0.28 * ((n - 0.45) / 0.3).clamp(0.0, 1.0)]
+    });
     // The raised rim step and the groove above the bottom lip.
     c.fill(
         &round_frame(22., 18., w - 44., h - 40., 30., 1.6),
@@ -93,6 +116,15 @@ pub fn bezel() -> RgbaImage {
         [1., 1., 1., 0.5],
     );
 
+    // A speaker grille moulded into the bottom lip.
+    for i in -6..=6 {
+        let x = w / 2.0 + i as f32 * 12.0;
+        let slot = || capsule([x, 632.], [x, 648.], 4.);
+        c.fill(&slot(), [0., 0., 0., 0.28]);
+        c.inner_shadow(&slot(), [0., 2.], 1.5, [0., 0., 0., 0.45]);
+        c.fill(&capsule([x, 649.5], [x, 650.5], 3.), [1., 1., 1., 0.35]);
+    }
+
     // The recessed silver panel: a chamfer, then the brushed face.
     let chamfer = || round_rect(172., 24., 776., 570., 26.);
     c.paint(&chamfer(), vgrad(hex(0xa9aaa5), hex(0xe2e3df), 24., 594.));
@@ -105,11 +137,24 @@ pub fn bezel() -> RgbaImage {
         let base = mix(hex(0xdcddd9), hex(0xc8c9c4), (y - 34.) / 550.);
         // Brushed: fine horizontal streaks.
         let streak =
-            (hash(0, y as i32) - 0.5) * 0.03 + (hash(x as i32 / 37, y as i32) - 0.5) * 0.012;
+            (grain(0.0, y) - 0.5) * 0.03 + (hash(x as i32 / 37, (y * SCALE) as i32) - 0.5) * 0.012;
         [base[0] + streak, base[1] + streak, base[2] + streak, 1.0]
     });
     c.inner_shadow(&face(), [0., 3.], 5., [0., 0., 0., 0.22]);
     c.inner_shadow(&face(), [0., -1.5], 2., [1., 1., 1., 0.5]);
+    // Hairline scratches in the brushed metal, and dirt where the panel meets the shell.
+    let on_face = |x: f32, y: f32| face().contains(x, y);
+    wear::scratches(
+        &mut c,
+        &mut dice,
+        [182., 34., 938., 584.],
+        260,
+        [3., 26.],
+        0.6,
+        &on_face,
+    );
+    wear::grime(&mut c, &round_frame(170., 22., 780., 574., 28., 4.), 0.55);
+    wear::grime(&mut c, &round_frame(182., 34., 756., 550., 20., 3.), 0.35);
 
     // Grey surround and the dark lip right around the glass.
     let [lx, ly] = LCD_ORIGIN;
@@ -139,18 +184,19 @@ pub fn bezel() -> RgbaImage {
         let half = t.width(s) / 2.0 + 14.0;
         rect(w / 2.0 - half, y - 20.0, half * 2.0, 40.0)
     };
-    line.erase(&gap(&title, "НУ ,ПОГОДИ!", top));
+    line.erase(&gap(&title, "НУ, ПОГОДИ!", top));
     line.erase(&gap(&model, "ЭЛЕКТРОНИКА ИМ 02", bottom));
-    c.draw(&line, 1.0);
+    // Everything printed goes on its own layer, so it can be rubbed off afterwards.
+    let mut print = line;
     let baseline = |t: &Text, y: f32| y + t.cap_height() / 2.0;
     title.draw(
-        &mut c,
-        "НУ ,ПОГОДИ!",
+        &mut print,
+        "НУ, ПОГОДИ!",
         [w / 2.0, baseline(&title, top)],
         TITLE_RED,
     );
     model.draw(
-        &mut c,
+        &mut print,
         "ЭЛЕКТРОНИКА ИМ 02",
         [w / 2.0, baseline(&model, bottom)],
         PRINT,
@@ -158,11 +204,11 @@ pub fn bezel() -> RgbaImage {
 
     // The "ИМ" badge.
     let badge = [94., 98.];
-    c.fill(&ring(badge, 40., 40., 0.0, 3.4), PRINT);
-    c.fill(&circle([badge[0] - 40., badge[1]], 6.), PRINT);
+    print.fill(&ring(badge, 40., 40., 0.0, 3.4), PRINT);
+    print.fill(&circle([badge[0] - 40., badge[1]], 6.), PRINT);
     let im = Text::new(text::CONDENSED, 40.0);
     im.draw(
-        &mut c,
+        &mut print,
         "ИМ",
         [badge[0] + 2., baseline(&im, badge[1])],
         PRINT,
@@ -170,21 +216,42 @@ pub fn bezel() -> RgbaImage {
 
     for (_, at, dir) in BIG {
         big_button(&mut c, at);
-        arrow(&mut c, at, dir);
+        arrow(&mut print, at, dir);
     }
 
-    let label = Text::new(text::BOLD, 17.0);
+    let label = Text::new(text::BOLD, 15.0).tracking(1.0);
     for (_, y, s) in PILLS {
         pill_button(&mut c, [PILL_X, y]);
-        label.draw(&mut c, s, [PILL_X, y + 36.], PRINT);
+        label.draw(&mut print, s, [PILL_X, y + 36.], PRINT);
     }
-    bell_icon(&mut c, [ICON_X, 68.]);
-    clock_icon(&mut c, [ICON_X, 142.]);
+    bell_icon(&mut print, [ICON_X, 68.]);
+    clock_icon(&mut print, [ICON_X, 142.]);
     for (_, y) in HOLES {
         hole(&mut c, [ICON_X, y]);
     }
 
+    // Thumbs rub the print off around the buttons; the rest just wears thin.
+    wear::erode(&mut print, 31.0, rubbed);
+    c.draw(&print, 1.0);
+    wear::dust(&mut c, &mut dice, [8., 6., w - 8., h - 8.], 500);
+
     c.img
+}
+
+/// How often fingers touch the print at `(x, y)`, `0..1`: around the ramp buttons and on
+/// the labels under the pills.
+fn rubbed(x: f32, y: f32) -> f32 {
+    let mut r: f32 = 0.0;
+    for (_, [bx, by], _) in BIG {
+        let d = ((x - bx).powi(2) + (y - by).powi(2)).sqrt();
+        r = r.max((1.0 - (d - SOCKET_R) / 40.0).clamp(0.0, 1.0));
+    }
+    for (_, py, _) in PILLS {
+        let near = (1.0 - (x - PILL_X).abs() / 60.0).max(0.0)
+            * (1.0 - (y - py - 30.).abs() / 20.0).max(0.0);
+        r = r.max(near * 0.9);
+    }
+    r
 }
 
 fn big_button(c: &mut Canvas, at: [f32; 2]) {
@@ -203,7 +270,15 @@ fn big_button(c: &mut Canvas, at: [f32; 2]) {
     let well = || circle(at, DOME_R + 6.);
     c.fill(&well(), hex(0x9a9b96));
     c.inner_shadow(&well(), [0., 3.], 5., [0., 0., 0., 0.55]);
+    wear::grime(c, &ring(at, DOME_R + 6., DOME_R + 6., 0.0, 2.5), 0.7);
+    wear::grime(c, &ring(at, SOCKET_R + 1., SOCKET_R + 1., 0.0, 2.5), 0.5);
     dome(c, at, DOME_R);
+    // The top of the dome is rubbed matte by thumbs.
+    c.paint(&circle(at, DOME_R * 0.8), move |x, y| {
+        let d = ((x - at[0]).powi(2) + (y - at[1] + 3.).powi(2)).sqrt() / (DOME_R * 0.8);
+        let n = fbm(x, y, 6.0);
+        [0.95, 0.78, 0.74, (1.0 - d).max(0.0) * (0.12 + 0.12 * n)]
+    });
 }
 
 /// A glossy red dome lit from the top left.
@@ -235,17 +310,20 @@ fn dome(c: &mut Canvas, at: [f32; 2], r: f32) {
 fn arrow(c: &mut Canvas, at: [f32; 2], dir: [f32; 2]) {
     let n = std::f32::consts::FRAC_1_SQRT_2;
     let d = [dir[0] * n, dir[1] * n];
-    let base = [at[0] + d[0] * 70., at[1] + d[1] * 70.];
-    let tip = [at[0] + d[0] * 50., at[1] + d[1] * 50.];
+    // Printed right against the socket, with a short tick line, so it reads as a label.
+    let base = [at[0] + d[0] * 66., at[1] + d[1] * 66.];
+    let tip = [at[0] + d[0] * 48., at[1] + d[1] * 48.];
     let p = [-d[1], d[0]];
     c.fill(
         &poly(&[
             tip,
-            [base[0] + p[0] * 10., base[1] + p[1] * 10.],
-            [base[0] - p[0] * 10., base[1] - p[1] * 10.],
+            [base[0] + p[0] * 11., base[1] + p[1] * 11.],
+            [base[0] - p[0] * 11., base[1] - p[1] * 11.],
         ]),
         PRINT,
     );
+    let tail = [at[0] + d[0] * 78., at[1] + d[1] * 78.];
+    c.fill(&capsule(base, tail, 3.), PRINT);
 }
 
 fn pill_button(c: &mut Canvas, at: [f32; 2]) {
@@ -299,6 +377,12 @@ fn pill_button(c: &mut Canvas, at: [f32; 2]) {
             ]
         },
     );
+    // Rubbed matte in the middle, where the finger lands.
+    c.paint(&cap(), move |xx, yy| {
+        let d = ((xx - x) / (pw * 0.45)).powi(2) + ((yy - y) / (ph * 0.5)).powi(2);
+        let n = fbm(xx, yy, 5.0);
+        [0.95, 0.8, 0.76, (1.0 - d).max(0.0) * (0.1 + 0.14 * n)]
+    });
 }
 
 fn hole(c: &mut Canvas, at: [f32; 2]) {

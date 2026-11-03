@@ -7,15 +7,16 @@ use crate::atlas::Atlas;
 use crate::controls::{Button, View2D};
 use crate::layout::{Layout, Shape};
 
-/// Unlit segments are faintly visible on a real LCD.
-const GHOST: [f32; 4] = [1.0, 1.0, 1.0, 0.045];
+/// Unlit segments are faintly visible on a real LCD; any stronger and the idle wolf and
+/// baskets read as a second character.
+const GHOST: [f32; 4] = [1.0, 1.0, 1.0, 0.022];
 const LIT: [f32; 4] = [1.0, 1.0, 1.0, 0.9];
 /// Lit segments cast a soft shadow onto the mirror behind the liquid crystal.
 const SHADOW: [f32; 4] = [1.0, 1.0, 1.0, 0.14];
 const SHADOW_OFFSET: [f32; 2] = [2.5, 3.0];
 
 /// Held buttons are shaded with a mask sprite from the atlas.
-const PRESSED: [f32; 4] = [0.0, 0.0, 0.0, 0.32];
+const PRESSED: [f32; 4] = [0.0, 0.0, 0.0, 0.42];
 
 mod layer {
     pub const BEZEL: i16 = 0;
@@ -78,11 +79,12 @@ impl Renderer {
             let Some(s) = self.atlas.get(&place.sprite) else {
                 return;
             };
+            let size = s.size.map(|v| v / layout.art_scale);
             let pos = [
-                layout.lcd_origin[0] + place.at[0] - s.size[0] * 0.5 + offset[0],
-                layout.lcd_origin[1] + place.at[1] - s.size[1] * 0.5 + offset[1],
+                layout.lcd_origin[0] + place.at[0] - size[0] * 0.5 + offset[0],
+                layout.lcd_origin[1] + place.at[1] - size[1] * 0.5 + offset[1],
             ];
-            let inst = SpriteInstance::at(pos, s.size)
+            let inst = SpriteInstance::at(pos, size)
                 .with_uv(s.uv_min, s.uv_max)
                 .with_color(color);
             p.sprite_ex(self.atlas.texture, inst, layer, BlendMode::Alpha);
@@ -114,8 +116,9 @@ impl Renderer {
             let Some(s) = self.atlas.get(mask) else {
                 continue;
             };
-            let pos = [center[0] - s.size[0] * 0.5, center[1] - s.size[1] * 0.5];
-            let inst = SpriteInstance::at(pos, s.size)
+            let size = s.size.map(|v| v / layout.art_scale);
+            let pos = [center[0] - size[0] * 0.5, center[1] - size[1] * 0.5];
+            let inst = SpriteInstance::at(pos, size)
                 .with_uv(s.uv_min, s.uv_max)
                 .with_color(PRESSED);
             p.sprite_ex(self.atlas.texture, inst, layer::PRESSED, BlendMode::Alpha);

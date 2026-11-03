@@ -2,7 +2,7 @@
 
 use ab_glyph::{Font, FontRef, PxScale, ScaleFont, point};
 
-use crate::canvas::{Canvas, Color};
+use crate::canvas::{Canvas, Color, SCALE};
 
 pub static BOLD: &[u8] = include_bytes!("../fonts/DejaVuSans-Bold.ttf");
 pub static CONDENSED: &[u8] = include_bytes!("../fonts/DejaVuSansCondensed-Bold.ttf");
@@ -63,13 +63,15 @@ impl<'a> Text<'a> {
             if let Some(p) = prev {
                 x += f.kern(p, id);
             }
-            let g = id.with_scale_and_position(self.size, point(x, at[1]));
+            // Rasterize in pixel space, at the canvas density.
+            let pos = point((x - c.origin[0]) * SCALE, (at[1] - c.origin[1]) * SCALE);
+            let g = id.with_scale_and_position(self.size * SCALE, pos);
             if let Some(og) = self.font.outline_glyph(g) {
                 let b = og.px_bounds();
                 let (w, h) = c.img.dimensions();
                 og.draw(|gx, gy, cov| {
-                    let px = (b.min.x + gx as f32 - c.origin[0]).floor();
-                    let py = (b.min.y + gy as f32 - c.origin[1]).floor();
+                    let px = (b.min.x + gx as f32).floor();
+                    let py = (b.min.y + gy as f32).floor();
                     if px >= 0.0 && py >= 0.0 && (px as u32) < w && (py as u32) < h {
                         c.blend(px as u32, py as u32, color, cov.min(1.0));
                     }

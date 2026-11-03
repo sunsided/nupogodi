@@ -24,6 +24,11 @@ pub fn mix(a: Color, b: Color, t: f32) -> Color {
     std::array::from_fn(|i| a[i] + (b[i] - a[i]) * t)
 }
 
+/// Per-pixel noise at drawing coordinates `(x, y)`, in `0.0..1.0`.
+pub fn grain(x: f32, y: f32) -> f32 {
+    hash((x * SCALE) as i32, (y * SCALE) as i32)
+}
+
 /// Cheap deterministic value noise in `0.0..1.0`.
 pub fn hash(x: i32, y: i32) -> f32 {
     let mut h = (x as u32).wrapping_mul(0x8da6_b343) ^ (y as u32).wrapping_mul(0xd816_3841);
@@ -226,7 +231,12 @@ pub fn star(c: [f32; 2], outer: f32, inner: f32, n: usize, rot: f32) -> Shape {
 
 const SS: usize = 4;
 
-/// An RGBA image you draw on in your own coordinate system: pixel `(0, 0)` sits at `origin`.
+/// Pixels per drawing unit. All art is drawn in device units and rasterized at this
+/// density, so it stays sharp on HiDPI screens; the game divides sprite sizes by it.
+pub const SCALE: f32 = 2.0;
+
+/// An RGBA image you draw on in your own coordinate system: pixel `(0, 0)` sits at `origin`,
+/// and one drawing unit spans [`SCALE`] pixels.
 pub struct Canvas {
     pub img: RgbaImage,
     pub origin: [f32; 2],
@@ -237,22 +247,41 @@ impl Canvas {
         Self::at(w, h, [0.0, 0.0])
     }
 
+    /// A `w × h` canvas in drawing units (`w·SCALE × h·SCALE` pixels).
     pub fn at(w: u32, h: u32, origin: [f32; 2]) -> Self {
+        let px = |v: u32| (v as f32 * SCALE).round() as u32;
         Self {
-            img: RgbaImage::new(w, h),
+            img: RgbaImage::new(px(w), px(h)),
             origin,
         }
     }
 
+    /// Size in drawing units.
+    pub fn size(&self) -> (u32, u32) {
+        let (w, h) = self.img.dimensions();
+        (
+            (w as f32 / SCALE).round() as u32,
+            (h as f32 / SCALE).round() as u32,
+        )
+    }
+
+    /// Drawing coordinates of pixel `(px, py)`'s top-left corner.
+    fn unit(&self, px: u32, py: u32) -> [f32; 2] {
+        [
+            px as f32 / SCALE + self.origin[0],
+            py as f32 / SCALE + self.origin[1],
+        ]
+    }
+
     /// Fraction of the pixel `(px, py)` covered by `s`.
     fn coverage(&self, s: &Shape, px: u32, py: u32) -> f32 {
-        let x0 = px as f32 + self.origin[0];
-        let y0 = py as f32 + self.origin[1];
+        let [x0, y0] = self.unit(px, py);
+        let step = 1.0 / (SS as f32 * SCALE);
         let mut n = 0;
         for j in 0..SS {
             for i in 0..SS {
-                let x = x0 + (i as f32 + 0.5) / SS as f32;
-                let y = y0 + (j as f32 + 0.5) / SS as f32;
+                let x = x0 + (i as f32 + 0.5) * step;
+                let y = y0 + (j as f32 + 0.5) * step;
                 if s.contains(x, y) {
                     n += 1;
                 }
@@ -263,10 +292,11 @@ impl Canvas {
 
     fn pixels_of(&self, s: &Shape) -> impl Iterator<Item = (u32, u32)> + use<> {
         let (w, h) = self.img.dimensions();
-        let x0 = ((s.bbox[0] - self.origin[0]).floor().max(0.0) as u32).min(w);
-        let y0 = ((s.bbox[1] - self.origin[1]).floor().max(0.0) as u32).min(h);
-        let x1 = ((s.bbox[2] - self.origin[0]).ceil().max(0.0) as u32 + 1).min(w);
-        let y1 = ((s.bbox[3] - self.origin[1]).ceil().max(0.0) as u32 + 1).min(h);
+        let px = |v: f32, o: f32| (v - o) * SCALE;
+        let x0 = (px(s.bbox[0], self.origin[0]).floor().max(0.0) as u32).min(w);
+        let y0 = (px(s.bbox[1], self.origin[1]).floor().max(0.0) as u32).min(h);
+        let x1 = (px(s.bbox[2], self.origin[0]).ceil().max(0.0) as u32 + 1).min(w);
+        let y1 = (px(s.bbox[3], self.origin[1]).ceil().max(0.0) as u32 + 1).min(h);
         (y0..y1).flat_map(move |y| (x0..x1).map(move |x| (x, y)))
     }
 
@@ -279,11 +309,25 @@ impl Canvas {
         for (x, y) in self.pixels_of(s) {
             let cov = self.coverage(s, x, y);
             if cov > 0.0 {
-                let c = f(
-                    x as f32 + self.origin[0] + 0.5,
-                    y as f32 + self.origin[1] + 0.5,
-                );
+                let [ux, uy] = self.unit(x, y);
+                let c = f(ux + 0.5 / SCALE, uy + 0.5 / SCALE);
                 self.blend(x, y, c, cov);
+            }
+        }
+    }
+
+    /// Scale every pixel's alpha by `f` (drawing coordinates of the pixel center).
+    pub fn fade(&mut self, f: impl Fn(f32, f32) -> f32) {
+        let (w, h) = self.img.dimensions();
+        for y in 0..h {
+            for x in 0..w {
+                let p = self.img.get_pixel_mut(x, y);
+                if p[3] == 0 {
+                    continue;
+                }
+                let u = x as f32 / SCALE + self.origin[0] + 0.5 / SCALE;
+                let v = y as f32 / SCALE + self.origin[1] + 0.5 / SCALE;
+                p[3] = (p[3] as f32 * f(u, v).clamp(0.0, 1.0)).round() as u8;
             }
         }
     }
@@ -318,8 +362,8 @@ impl Canvas {
 
     /// Draw another canvas over this one, both in the same drawing coordinates.
     pub fn draw(&mut self, o: &Canvas, opacity: f32) {
-        let dx = (o.origin[0] - self.origin[0]).round() as i64;
-        let dy = (o.origin[1] - self.origin[1]).round() as i64;
+        let dx = ((o.origin[0] - self.origin[0]) * SCALE).round() as i64;
+        let dy = ((o.origin[1] - self.origin[1]) * SCALE).round() as i64;
         let (w, h) = self.img.dimensions();
         for (x, y, p) in o.img.enumerate_pixels() {
             let (tx, ty) = (x as i64 + dx, y as i64 + dy);
@@ -338,9 +382,10 @@ impl Canvas {
 
     /// A soft shadow of `s`: its silhouette, blurred by `radius` and offset.
     pub fn shadow(&mut self, s: &Shape, offset: [f32; 2], radius: f32, c: Color) {
+        let (w, h) = self.size();
         let mut m = Canvas::at(
-            self.img.width(),
-            self.img.height(),
+            w,
+            h,
             [self.origin[0] - offset[0], self.origin[1] - offset[1]],
         );
         m.fill(s, c);
@@ -352,7 +397,7 @@ impl Canvas {
     /// Glow inside `s` along its edge: `c` fades in toward the boundary over `radius`, and is
     /// shifted by `offset` so the light seems to come from one side.
     pub fn inner_shadow(&mut self, s: &Shape, offset: [f32; 2], radius: f32, c: Color) {
-        let (w, h) = self.img.dimensions();
+        let (w, h) = self.size();
         let mut m = Canvas::at(w, h, self.origin);
         m.fill(&rect(-1e4, -1e4, 2e4, 2e4), c);
         let mut hole = Canvas::at(
@@ -376,9 +421,9 @@ impl Canvas {
         self.draw(&m, 1.0);
     }
 
-    /// Three box-blur passes (close to a Gaussian), premultiplied.
+    /// Three box-blur passes (close to a Gaussian), premultiplied; `radius` in drawing units.
     pub fn blur(&mut self, radius: f32) {
-        let r = (radius / 1.7).round().max(1.0) as i32;
+        let r = (radius * SCALE / 1.7).round().max(1.0) as i32;
         let (w, h) = (self.img.width() as i32, self.img.height() as i32);
         let mut buf: Vec<[f32; 4]> = self
             .img
@@ -454,8 +499,8 @@ impl Canvas {
         let (w, h) = (x1 - x0 + 1, y1 - y0 + 1);
         let img = image::imageops::crop_imm(&self.img, x0, y0, w, h).to_image();
         let center = [
-            self.origin[0] + x0 as f32 + w as f32 / 2.0,
-            self.origin[1] + y0 as f32 + h as f32 / 2.0,
+            self.origin[0] + (x0 as f32 + w as f32 / 2.0) / SCALE,
+            self.origin[1] + (y0 as f32 + h as f32 / 2.0) / SCALE,
         ];
         (img, center)
     }
