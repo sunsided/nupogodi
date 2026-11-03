@@ -1,0 +1,103 @@
+# On a version tag (v1.2.3): build the browser build, attest its build provenance, publish it
+# with SHA256SUMS as a GitHub release, and announce the release to games.markusmayer.dev,
+# which verifies it and puts it on its showroom floor.
+#
+# Verify a downloaded build with:
+#   gh attestation verify nupogodi-<tag>-web.zip --repo sunsided/nupogodi
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  web:
+    name: Web build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # sign the provenance attestation
+      attestations: write # store the provenance attestation
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
+
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+        with:
+          toolchain: stable
+          targets: wasm32-unknown-unknown
+
+      # No build cache: a release is built from scratch, never from a cache other runs wrote.
+
+      - uses: taiki-e/install-action@8cca0918f8471c33515202b73f56ab27f2bed283 # v2.87.29
+        with:
+          tool: trunk
+
+      - uses: arduino/setup-task@b91d5d2c96a56797b48ac1e0e89220bf64044611 # v2.0.0
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build for the browser
+        run: task web:build
+        env:
+          PROFILE: release
+
+      - name: Package
+        run: |
+          name="nupogodi-${GITHUB_REF_NAME}-web"
+          (cd dist && zip -r -9 "../$name.zip" .)
+          sha256sum "$name.zip" > SHA256SUMS
+
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: |
+            nupogodi-*-web.zip
+            dist/nupogodi_bg.wasm
+            dist/nupogodi.js
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release
+          path: |
+            nupogodi-*-web.zip
+            SHA256SUMS
+          if-no-files-found: error
+
+  release:
+    name: Publish release
+    needs: [web]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # create the release
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release
+          path: out
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" out/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "Ну, погоди! $GITHUB_REF_NAME" \
+            --generate-notes \
+            --verify-tag
+
+  # Needs the games announce GitHub App on games.markusmayer.dev: variable
+  # GAMES_ANNOUNCE_APP_ID, secret GAMES_ANNOUNCE_APP_PRIVATE_KEY. Pinned to a commit of
+  # that repository; move the pin when its announce.yml changes.
+  announce:
+    name: Announce on games.markusmayer.dev
+    needs: [release]
+    permissions: {}
+    uses: sunsided/games.markusmayer.dev/.github/workflows/announce.yml@efb547983f3b007bab781c2a16b7638ee745c2bc # main
+    with:
+      app-id: ${{ vars.GAMES_ANNOUNCE_APP_ID }}
+    secrets:
+      private-key: ${{ secrets.GAMES_ANNOUNCE_APP_PRIVATE_KEY }}
