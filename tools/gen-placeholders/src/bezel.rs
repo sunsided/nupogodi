@@ -70,7 +70,7 @@ pub fn bezel() -> RgbaImage {
     c.shadow(&shell(), [0., 3.], 5., [0., 0., 0., 0.5]);
     c.paint(&shell(), |x, y| {
         let base = mix(hex(0xd6d7d2), hex(0xbdbeb8), y / h);
-        let g = (hash(x as i32, y as i32) - 0.5) * 0.015;
+        let g = (grain(x, y) - 0.5) * 0.015;
         [base[0] + g, base[1] + g, base[2] + g, 1.0]
     });
     c.inner_shadow(&shell(), [0., 2.5], 3., [1., 1., 1., 0.7]);
@@ -105,7 +105,7 @@ pub fn bezel() -> RgbaImage {
         let base = mix(hex(0xdcddd9), hex(0xc8c9c4), (y - 34.) / 550.);
         // Brushed: fine horizontal streaks.
         let streak =
-            (hash(0, y as i32) - 0.5) * 0.03 + (hash(x as i32 / 37, y as i32) - 0.5) * 0.012;
+            (grain(0.0, y) - 0.5) * 0.03 + (hash(x as i32 / 37, (y * SCALE) as i32) - 0.5) * 0.012;
         [base[0] + streak, base[1] + streak, base[2] + streak, 1.0]
     });
     c.inner_shadow(&face(), [0., 3.], 5., [0., 0., 0., 0.22]);

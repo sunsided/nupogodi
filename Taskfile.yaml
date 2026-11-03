@@ -114,7 +114,7 @@ tasks:
       - assets/atlas.png
       - assets/atlas.json
     cmds:
-      - atlas-packer --input art/segments --output assets/atlas.png --metadata assets/atlas.json --padding 2
+      - atlas-packer --input art/segments --output assets/atlas.png --metadata assets/atlas.json --padding 4
       - cp art/bezel.png art/lcd_bg.png art/lcd_glass.png assets/
 
   web:

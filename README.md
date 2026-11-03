@@ -57,9 +57,12 @@ red-brown henhouses and green bushes.
 - `art/segments/*.png`: one image per LCD segment, drawn in solid ink on transparency. The game
   tints them, so only the alpha channel matters. `press_*.png` are the masks that shade held
   buttons.
-- `art/lcd_bg.png` (660×416): the printed LCD film (henhouses, ramps, hens, bushes).
-- `art/lcd_glass.png` (660×416): drawn over the segments (frame shadow and glare).
-- `art/bezel.png` (1120×672): the device casing, including all printed labels.
+- `art/lcd_bg.png` (1320×832): the printed LCD film (henhouses, ramps, hens, bushes).
+- `art/lcd_glass.png` (1320×832): drawn over the segments (frame shadow and glare).
+- `art/bezel.png` (2240×1344): the device casing, including all printed labels.
+- All art is drawn at 2× the device's 1120×672 logical pixels so it stays sharp on HiDPI
+  screens. `layout.json`'s `art_scale` tells the game the density; positions stay in device
+  pixels.
 - `assets/layout.json`: where each segment's center sits on the LCD and where the bezel buttons
   are. Several segments can share one sprite (e.g. all eggs use `egg`).
 

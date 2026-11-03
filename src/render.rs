@@ -78,11 +78,12 @@ impl Renderer {
             let Some(s) = self.atlas.get(&place.sprite) else {
                 return;
             };
+            let size = s.size.map(|v| v / layout.art_scale);
             let pos = [
-                layout.lcd_origin[0] + place.at[0] - s.size[0] * 0.5 + offset[0],
-                layout.lcd_origin[1] + place.at[1] - s.size[1] * 0.5 + offset[1],
+                layout.lcd_origin[0] + place.at[0] - size[0] * 0.5 + offset[0],
+                layout.lcd_origin[1] + place.at[1] - size[1] * 0.5 + offset[1],
             ];
-            let inst = SpriteInstance::at(pos, s.size)
+            let inst = SpriteInstance::at(pos, size)
                 .with_uv(s.uv_min, s.uv_max)
                 .with_color(color);
             p.sprite_ex(self.atlas.texture, inst, layer, BlendMode::Alpha);
@@ -114,8 +115,9 @@ impl Renderer {
             let Some(s) = self.atlas.get(mask) else {
                 continue;
             };
-            let pos = [center[0] - s.size[0] * 0.5, center[1] - s.size[1] * 0.5];
-            let inst = SpriteInstance::at(pos, s.size)
+            let size = s.size.map(|v| v / layout.art_scale);
+            let pos = [center[0] - size[0] * 0.5, center[1] - size[1] * 0.5];
+            let inst = SpriteInstance::at(pos, size)
                 .with_uv(s.uv_min, s.uv_max)
                 .with_color(PRESSED);
             p.sprite_ex(self.atlas.texture, inst, layer::PRESSED, BlendMode::Alpha);

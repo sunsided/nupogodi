@@ -9,6 +9,10 @@ use serde::Deserialize;
 pub struct Layout {
     /// Device (bezel) size in logical pixels; the whole game is drawn in this space.
     pub device: [f32; 2],
+    /// Art pixels per device pixel: the art is drawn at this density for HiDPI screens, so
+    /// atlas sprite sizes are divided by it.
+    #[serde(default = "one")]
+    pub art_scale: f32,
     /// Top-left of the LCD on the bezel.
     pub lcd_origin: [f32; 2],
     pub lcd_size: [f32; 2],
@@ -45,6 +49,10 @@ impl Shape {
             }
         }
     }
+}
+
+fn one() -> f32 {
+    1.0
 }
 
 impl Layout {

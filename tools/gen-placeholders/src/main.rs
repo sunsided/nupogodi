@@ -41,6 +41,7 @@ fn main() {
 
     let doc = json!({
         "device": [bezel::W, bezel::H],
+        "art_scale": canvas::SCALE,
         "lcd_origin": bezel::LCD_ORIGIN,
         "lcd_size": [lcd::W, lcd::H],
         "segments": sheet.layout,

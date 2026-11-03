@@ -61,8 +61,9 @@ impl Sheet {
     }
 }
 
-fn round1(v: f32) -> f32 {
-    (v * 10.0).round() / 10.0
+/// One decimal, rounded in `f64` so the JSON doesn't print `217.3000030517578`.
+fn round1(v: f32) -> f64 {
+    (f64::from(v) * 10.0).round() / 10.0
 }
 
 // --- where things are ------------------------------------------------------------------
@@ -542,7 +543,7 @@ pub fn background() -> RgbaImage {
     // Reflective LCD: a cool grey-green with a faint vertical falloff and grain.
     c.paint(&rect(0., 0., W as f32, H as f32), |x, y| {
         let t = y / H as f32;
-        let g = (hash(x as i32, y as i32) - 0.5) * 0.012;
+        let g = (grain(x, y) - 0.5) * 0.012;
         let base = mix(hex(0xbcc0b2), hex(0xa9ae9f), t);
         [base[0] + g, base[1] + g, base[2] + g, 1.0]
     });
