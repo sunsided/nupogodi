@@ -3,7 +3,7 @@
 //! the LCD and where the buttons are on the bezel).
 //!
 //! The look follows the Elektronika IM-02: grey shell, recessed silver panel, red
-//! "НУ ,ПОГОДИ!" title, red buttons, and an LCD film with red-brown henhouses and green bushes.
+//! "НУ, ПОГОДИ!" title, red buttons, and an LCD film with red-brown henhouses and green bushes.
 //!
 //! Existing files are left alone so hand-drawn art is never overwritten; pass `--force` to
 //! regenerate everything. Run it in release mode, the rasterizer supersamples every pixel.

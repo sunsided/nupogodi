@@ -30,9 +30,9 @@ const SOCKET_R: f32 = 44.;
 const DOME_R: f32 = 31.;
 /// Pill buttons: (name, center y, label).
 const PILLS: [(&str, f32, &str); 3] = [
-    ("game_a", 74., "игра А"),
-    ("game_b", 144., "игра Б"),
-    ("time", 214., "время"),
+    ("game_a", 74., "ИГРА А"),
+    ("game_b", 144., "ИГРА Б"),
+    ("time", 214., "ВРЕМЯ"),
 ];
 const PILL_X: f32 = 990.;
 const PILL: [f32; 2] = [64., 30.];
@@ -94,6 +94,15 @@ pub fn bezel() -> RgbaImage {
         [1., 1., 1., 0.5],
     );
 
+    // A speaker grille moulded into the bottom lip.
+    for i in -6..=6 {
+        let x = w / 2.0 + i as f32 * 12.0;
+        let slot = || capsule([x, 632.], [x, 648.], 4.);
+        c.fill(&slot(), [0., 0., 0., 0.28]);
+        c.inner_shadow(&slot(), [0., 2.], 1.5, [0., 0., 0., 0.45]);
+        c.fill(&capsule([x, 649.5], [x, 650.5], 3.), [1., 1., 1., 0.35]);
+    }
+
     // The recessed silver panel: a chamfer, then the brushed face.
     let chamfer = || round_rect(172., 24., 776., 570., 26.);
     c.paint(&chamfer(), vgrad(hex(0xa9aaa5), hex(0xe2e3df), 24., 594.));
@@ -140,13 +149,13 @@ pub fn bezel() -> RgbaImage {
         let half = t.width(s) / 2.0 + 14.0;
         rect(w / 2.0 - half, y - 20.0, half * 2.0, 40.0)
     };
-    line.erase(&gap(&title, "НУ ,ПОГОДИ!", top));
+    line.erase(&gap(&title, "НУ, ПОГОДИ!", top));
     line.erase(&gap(&model, "ЭЛЕКТРОНИКА ИМ 02", bottom));
     c.draw(&line, 1.0);
     let baseline = |t: &Text, y: f32| y + t.cap_height() / 2.0;
     title.draw(
         &mut c,
-        "НУ ,ПОГОДИ!",
+        "НУ, ПОГОДИ!",
         [w / 2.0, baseline(&title, top)],
         TITLE_RED,
     );
@@ -174,7 +183,7 @@ pub fn bezel() -> RgbaImage {
         arrow(&mut c, at, dir);
     }
 
-    let label = Text::new(text::BOLD, 17.0);
+    let label = Text::new(text::BOLD, 15.0).tracking(1.0);
     for (_, y, s) in PILLS {
         pill_button(&mut c, [PILL_X, y]);
         label.draw(&mut c, s, [PILL_X, y + 36.], PRINT);
@@ -236,17 +245,20 @@ fn dome(c: &mut Canvas, at: [f32; 2], r: f32) {
 fn arrow(c: &mut Canvas, at: [f32; 2], dir: [f32; 2]) {
     let n = std::f32::consts::FRAC_1_SQRT_2;
     let d = [dir[0] * n, dir[1] * n];
-    let base = [at[0] + d[0] * 70., at[1] + d[1] * 70.];
-    let tip = [at[0] + d[0] * 50., at[1] + d[1] * 50.];
+    // Printed right against the socket, with a short tick line, so it reads as a label.
+    let base = [at[0] + d[0] * 66., at[1] + d[1] * 66.];
+    let tip = [at[0] + d[0] * 48., at[1] + d[1] * 48.];
     let p = [-d[1], d[0]];
     c.fill(
         &poly(&[
             tip,
-            [base[0] + p[0] * 10., base[1] + p[1] * 10.],
-            [base[0] - p[0] * 10., base[1] - p[1] * 10.],
+            [base[0] + p[0] * 11., base[1] + p[1] * 11.],
+            [base[0] - p[0] * 11., base[1] - p[1] * 11.],
         ]),
         PRINT,
     );
+    let tail = [at[0] + d[0] * 78., at[1] + d[1] * 78.];
+    c.fill(&capsule(base, tail, 3.), PRINT);
 }
 
 fn pill_button(c: &mut Canvas, at: [f32; 2]) {

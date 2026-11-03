@@ -7,15 +7,16 @@ use crate::atlas::Atlas;
 use crate::controls::{Button, View2D};
 use crate::layout::{Layout, Shape};
 
-/// Unlit segments are faintly visible on a real LCD.
-const GHOST: [f32; 4] = [1.0, 1.0, 1.0, 0.045];
+/// Unlit segments are faintly visible on a real LCD; any stronger and the idle wolf and
+/// baskets read as a second character.
+const GHOST: [f32; 4] = [1.0, 1.0, 1.0, 0.022];
 const LIT: [f32; 4] = [1.0, 1.0, 1.0, 0.9];
 /// Lit segments cast a soft shadow onto the mirror behind the liquid crystal.
 const SHADOW: [f32; 4] = [1.0, 1.0, 1.0, 0.14];
 const SHADOW_OFFSET: [f32; 2] = [2.5, 3.0];
 
 /// Held buttons are shaded with a mask sprite from the atlas.
-const PRESSED: [f32; 4] = [0.0, 0.0, 0.0, 0.32];
+const PRESSED: [f32; 4] = [0.0, 0.0, 0.0, 0.42];
 
 mod layer {
     pub const BEZEL: i16 = 0;

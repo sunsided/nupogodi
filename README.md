@@ -1,6 +1,6 @@
 # Ну, погоди!
 
-![The game in its idle demo: the wolf catches eggs while the clock shows 1:21](docs/screenshot.png)
+![The game in its idle demo: the wolf catches eggs while the clock shows the time](docs/screenshot.png)
 
 A clone of the Soviet **Elektronika IM-02 "Nu, pogodi!"** LCD handheld (1984), itself a copy of
 Nintendo's Game & Watch *Egg*. Built on [game-toolkit](https://crates.io/crates/game-toolkit),

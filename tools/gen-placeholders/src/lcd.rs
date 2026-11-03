@@ -97,7 +97,7 @@ pub fn segments() -> Sheet {
     let mut s = Sheet::default();
 
     // Eggs roll down the ramps, then fall when nobody catches them.
-    s.local("egg", 26, 22, |c| c.fill(&egg([0., 0.], 0.0), INK));
+    s.local("egg", 30, 26, |c| egg(c, [0., 0.], 0.0));
     for (ramp, pts) in [("tl", EGGS_TL), ("bl", EGGS_BL)] {
         let right = if ramp == "tl" { "tr" } else { "br" };
         for (i, p) in pts.into_iter().enumerate() {
@@ -150,9 +150,9 @@ pub fn segments() -> Sheet {
     digits(&mut s);
 
     // Indicators.
-    let small = Text::new(text::BOLD, 13.0).tracking(1.0);
-    s.local("am", 26, 16, |c| label(c, &small, "ДП"));
-    s.local("pm", 26, 16, |c| label(c, &small, "ПП"));
+    let small = Text::new(text::BOLD, 16.0).tracking(1.0);
+    s.local("am", 32, 20, |c| label(c, &small, "ДП"));
+    s.local("pm", 32, 20, |c| label(c, &small, "ПП"));
     s.place("am", "am", [318., 30.]);
     s.place("pm", "pm", [318., 50.]);
     s.local("alarm", 24, 26, |c| bell(c, 0.0, false));
@@ -172,119 +172,153 @@ fn label(c: &mut Canvas, t: &Text, s: &str) {
 
 // --- shapes ----------------------------------------------------------------------------
 
-/// An egg outline lying on its side, the way the IM-02 draws them.
-fn egg(c: [f32; 2], rot: f32) -> Shape {
-    let (rx, ry) = (10.5, 8.0);
+/// An egg lying on its side: a bold outline around a half-tone body with a glint, so it
+/// reads as an egg (not a ring) at a glance.
+fn egg(cv: &mut Canvas, c: [f32; 2], rot: f32) {
+    const LINE: f32 = 3.2;
+    cv.fill(&egg_body(c, rot, 0.0).minus(egg_body(c, rot, LINE)), INK);
+    cv.fill(&egg_body(c, rot, LINE), alpha(INK, 0.3));
     let (s, co) = rot.sin_cos();
-    let inside = move |x: f32, y: f32, k: f32| {
+    let glint = [c[0] - 4.0 * co + 3.0 * s, c[1] - 4.0 * s - 3.0 * co];
+    cv.erase(&ellipse(glint, 3.2, 1.8, rot - 0.4));
+}
+
+/// The egg's silhouette shrunk by `k`; fatter at one end.
+fn egg_body(c: [f32; 2], rot: f32, k: f32) -> Shape {
+    let (rx, ry) = (12.0, 9.0);
+    let (s, co) = rot.sin_cos();
+    let m = rx + 2.0;
+    Shape::new([c[0] - m, c[1] - m, c[0] + m, c[1] + m], move |x, y| {
         let (dx, dy) = (x - c[0], y - c[1]);
         let u = dx * co + dy * s;
         let v = -dx * s + dy * co;
-        // Fatter at one end.
         let ry = (ry - k) * (1.0 + 0.12 * u / rx);
         (u / (rx - k)).powi(2) + (v / ry).powi(2) <= 1.0
-    };
-    let m = rx + 1.0;
-    Shape::new([c[0] - m, c[1] - m, c[0] + m, c[1] + m], move |x, y| {
-        inside(x, y, 0.0) && !inside(x, y, 2.8)
     })
 }
 
 fn falling(c: &mut Canvas) {
-    c.fill(&egg([0., 8.], 1.2), INK);
+    egg(c, [0., 8.], 1.2);
     // Speed lines.
     for (dx, len) in [(-6.0, 8.0), (0.0, 12.0), (6.0, 8.0)] {
         c.fill(&capsule([dx, -18.0], [dx, -18.0 + len], 2.2), INK);
     }
 }
 
+/// Our wolf: a lanky, scruffy fellow in dungarees and big shoes, facing left. Solid ink
+/// with details cut out in thin light lines, the way LCD segments are printed.
 fn wolf(c: &mut Canvas) {
-    // Bell-bottoms, knees bent in a jaunty stride.
+    // Shoes: big rounded clodhoppers, toes pointing the way he faces.
+    c.fill(&round_rect(244., 362., 40., 18., 9.), INK);
+    c.fill(&round_rect(316., 362., 38., 18., 9.), INK);
+    c.erase(&capsule([250., 371.], [262., 371.], 1.4));
+    c.erase(&capsule([322., 371.], [334., 371.], 1.4));
+
+    // Legs in dungarees, knees bent a little, wide at the hips.
     c.fill(
-        &union_all([
-            stroke(&[[292., 290.], [279., 324.], [273., 354.]], 17., 13.),
-            stroke(&[[310., 290.], [321., 324.], [331., 354.]], 17., 13.),
-            poly(&[[262., 350.], [283., 350.], [287., 369.], [254., 369.]]),
-            poly(&[[322., 350.], [341., 350.], [349., 369.], [317., 369.]]),
-        ]),
+        &stroke(&[[290., 296.], [281., 330.], [272., 364.]], 24., 19.),
         INK,
     );
-    // Big shoes, with a gap under the trouser cuffs.
-    c.erase(&rect(240., 368., 120., 2.));
-    c.fill(&ellipse([258., 376.], 17., 6.5, 0.0), INK);
-    c.fill(&ellipse([342., 376.], 15., 6.5, 0.0), INK);
-    // Stars on the trousers.
-    for (p, rot) in [
-        ([284., 318.], 0.2),
-        ([320., 330.], -0.3),
-        ([270., 356.], 0.0),
-    ] {
-        c.erase(&star(p, 4.6, 2.0, 5, rot));
-    }
+    c.fill(
+        &stroke(&[[312., 296.], [322., 330.], [330., 364.]], 24., 19.),
+        INK,
+    );
+    // Turned-up cuffs.
+    c.erase(&capsule([262., 352.], [283., 355.], 1.6));
+    c.erase(&capsule([320., 355.], [341., 352.], 1.6));
 
-    // Bushy tail.
-    let tail = bezier([316., 292.], [346., 296.], [354., 326.], 10);
-    c.fill(&stroke(&tail, 11., 6.), INK);
-    c.fill(&star([355., 330.], 8., 3.5, 5, 0.4), INK);
+    // Bushy tail sweeping out behind, with notches in the fur.
+    let tail = bezier([318., 290.], [356., 286.], [366., 326.], 12);
+    c.fill(&stroke(&tail, 16., 9.), INK);
+    c.fill(&ellipse([366., 332.], 9., 12., -0.3), INK);
+    c.erase(&capsule([364., 340.], [368., 345.], 1.3));
+    c.erase(&capsule([350., 300.], [357., 306.], 1.4));
+    c.erase(&capsule([359., 314.], [364., 320.], 1.4));
 
-    // Hips and torso in a striped sailor's vest.
-    c.fill(&ellipse([301., 289.], 24., 13., 0.0), INK);
-    c.fill(&ellipse([297., 257.], 22., 32., 0.12), INK);
-    for y in [242.0f32, 252., 262., 272.] {
-        let band = capsule([268., y], [326., y + 4.], 2.6);
-        c.erase(&band.and(ellipse([297., 257.], 17., 27., 0.12)));
-    }
-    // Belt.
-    c.erase(&capsule([278., 283.], [324., 285.], 1.8));
+    // Body: one pear shape from the chest down into the legs, so nothing floats.
+    c.fill(&ellipse([300., 268.], 27., 40., 0.06), INK);
+    c.fill(&ellipse([301., 296.], 28., 16., 0.0), INK);
+    // Dungarees: the bib's top edge, straps, buttons, a pocket and the fly seam.
+    c.erase(&capsule([280., 258.], [318., 260.], 1.5));
+    c.erase(&capsule([282., 258.], [290., 232.], 1.5));
+    c.erase(&capsule([316., 260.], [314., 234.], 1.5));
+    c.erase(&circle([285., 262.], 2.4));
+    c.erase(&circle([314., 264.], 2.4));
+    c.erase(&round_frame(292., 268., 15., 12., 3., 1.4));
+    c.erase(&capsule([301., 288.], [301., 304.], 1.4));
+    // Chest fur poking out above the bib.
+    c.erase(&poly(&[
+        [292., 240.],
+        [296., 250.],
+        [300., 242.],
+        [304., 251.],
+        [308., 241.],
+    ]));
 
-    // Neck and head.
-    c.fill(&capsule([289., 222.], [294., 240.], 13.), INK);
-    c.fill(&ellipse([285., 200.], 23., 21., 0.0), INK);
-    // Long snout, nose on the tip, lower jaw hanging open.
-    c.fill(&ellipse([254., 210.], 25., 10., 0.18), INK);
-    c.fill(&ellipse([260., 222.], 16., 6., 0.25), INK);
-    c.fill(&circle([230., 205.], 6.8), INK);
-    c.erase(&circle([228., 203.], 1.8));
-    // Grin, and a tooth.
+    // Neck, then the head, drawn a touch larger than life around the neck (`K`).
+    c.fill(&capsule([291., 230.], [295., 242.], 22.), INK);
+    const K: f32 = 1.12;
+    let t = |p: [f32; 2]| [290. + (p[0] - 290.) * K, 226. + (p[1] - 226.) * K];
+    let ts = |pts: &[[f32; 2]]| -> Vec<[f32; 2]> { pts.iter().map(|&p| t(p)).collect() };
+    c.fill(&ellipse(t([284., 199.]), 21. * K, 19. * K, -0.1), INK);
+    // A little cheek fur at the back of the jaw.
+    c.fill(
+        &poly(&ts(&[
+            [296., 204.],
+            [312., 208.],
+            [302., 213.],
+            [308., 221.],
+            [292., 219.],
+        ])),
+        INK,
+    );
+    // Long snout with a round nose; the lower jaw hangs open in a grin.
+    c.fill(
+        &tapered(t([270., 199.]), t([232., 205.]), 22. * K, 14. * K),
+        INK,
+    );
+    c.fill(&circle(t([228., 203.]), 7.5 * K), INK);
+    c.erase(&ellipse(t([226., 200.5]), 2.4 * K, 1.6 * K, 0.0));
+    c.fill(
+        &tapered(t([270., 214.]), t([244., 219.]), 12. * K, 8. * K),
+        INK,
+    );
     c.erase(&stroke(
-        &bezier([238., 214.], [252., 222.], [272., 218.], 8),
-        2.4,
-        2.0,
+        &ts(&bezier([238., 211.], [255., 214.], [270., 208.], 8)),
+        3.4 * K,
+        2.6 * K,
     ));
-    c.fill(&poly(&[[246., 216.5], [251., 218.], [248., 222.]]), INK);
-    c.erase(&poly(&[[245.5, 217.5], [250., 219.], [248., 221.5]]));
-    // Ears laid back, a scruffy forelock and cheek fur.
-    c.fill(&poly(&[[288., 185.], [302., 150.], [307., 188.]]), INK);
-    c.fill(&poly(&[[273., 184.], [277., 154.], [291., 182.]]), INK);
-    c.erase(&poly(&[[293., 180.], [301., 160.], [302., 182.]]));
     c.fill(
-        &poly(&[
-            [262., 188.],
-            [256., 168.],
-            [268., 178.],
-            [270., 160.],
-            [280., 176.],
-            [286., 164.],
-            [288., 182.],
-        ]),
+        &poly(&ts(&[[247., 210.], [252., 210.5], [249.5, 216.]])),
         INK,
     );
     c.fill(
-        &poly(&[
-            [300., 192.],
-            [318., 188.],
-            [308., 200.],
-            [320., 208.],
-            [306., 212.],
-            [314., 222.],
-            [298., 220.],
-        ]),
+        &poly(&ts(&[[259., 210.5], [264., 210.], [261.5, 216.]])),
         INK,
     );
-    // Eye with a heavy brow.
-    c.erase(&ellipse([270., 195.], 7., 8.5, 0.0));
-    c.fill(&circle([267., 197.5], 3.2), INK);
-    c.fill(&capsule([261., 187.5], [279., 190.], 4.), INK);
+    // Two tall pointed ears with a gap between them and inner lines.
+    c.fill(&poly(&ts(&[[272., 186.], [279., 150.], [291., 183.]])), INK);
+    c.fill(&poly(&ts(&[[293., 184.], [304., 152.], [306., 192.]])), INK);
+    c.erase(&capsule(t([280., 162.]), t([283., 180.]), 1.6 * K));
+    c.erase(&capsule(t([302., 164.]), t([301., 182.]), 1.6 * K));
+    // A small forelock.
+    c.fill(
+        &poly(&ts(&[
+            [266., 186.],
+            [262., 174.],
+            [272., 181.],
+            [274., 172.],
+            [280., 184.],
+        ])),
+        INK,
+    );
+    // Big eye glancing toward the ramps, under a heavy brow.
+    c.erase(&ellipse(t([266., 192.]), 8. * K, 9. * K, 0.1));
+    c.fill(&circle(t([263., 194.]), 3.6 * K), INK);
+    c.fill(
+        &tapered(t([256., 181.]), t([278., 184.]), 4.5 * K, 3. * K),
+        INK,
+    );
 }
 
 /// Arm reaching from the shoulder to a basket at the end of the top or bottom ramp.
@@ -294,15 +328,18 @@ fn arm(c: &mut Canvas, top: bool) {
     } else {
         ([252., 276.], [200., 291.], [170., 301.])
     };
-    c.fill(&stroke(&[SHOULDER, elbow, hand], 11., 8.), INK);
+    // A furry arm, thick at the shoulder, ending in a round paw.
+    c.fill(&stroke(&[SHOULDER, elbow, hand], 15., 10.), INK);
     basket(c, basket_at);
-    // The paw gripping the rim.
-    c.fill(&ellipse([hand[0] - 2.0, hand[1]], 7., 6., 0.3), INK);
-    c.erase(&capsule(
-        [hand[0] - 6.0, hand[1] - 2.0],
-        [hand[0] - 2.0, hand[1] + 3.0],
-        1.2,
-    ));
+    c.fill(&ellipse([hand[0] - 2.0, hand[1]], 8.5, 7.5, 0.3), INK);
+    // Fingers curled over the rim.
+    for k in [-1.0f32, 1.0] {
+        c.erase(&capsule(
+            [hand[0] - 7.0, hand[1] + k * 2.5],
+            [hand[0] - 2.5, hand[1] + k * 2.5],
+            1.1,
+        ));
+    }
 }
 
 /// A wicker basket: rim, open mouth, woven body, handle.
@@ -331,35 +368,43 @@ fn basket(c: &mut Canvas, m: [f32; 2]) {
 }
 
 fn hare(c: &mut Canvas) {
-    // Lying on his belly on the roof plank, chin up, feet kicked back.
-    c.fill(&ellipse([128., 90.], 33., 13., -0.12), INK);
-    c.fill(&ellipse([94., 96.], 13., 6., 0.3), INK);
-    c.fill(&ellipse([100., 84.], 10., 5., -0.8), INK);
-    c.fill(&circle([95., 88.], 5.), INK); // tail puff
-    c.erase(&circle([96., 86.], 2.));
+    // Sitting up on the roof plank, one big foot stretched along it, ringing the bell.
+    c.fill(&ellipse([140., 88.], 20., 13., 0.0), INK); // haunch
+    c.fill(&ellipse([166., 97.5], 15., 4.5, -0.04), INK); // hind foot
+    c.erase(&capsule([150., 95.], [176., 94.], 1.2));
+    c.fill(&ellipse([152., 70.], 13., 21., 0.25), INK); // body, leaning back
+    // Tail puff with a fluffy edge.
+    c.fill(&circle([120., 84.], 6.5), INK);
+    c.erase(&circle([118.5, 82.5], 3.));
     // Head and muzzle.
-    c.fill(&ellipse([170., 62.], 17., 15., 0.1), INK);
-    c.fill(&ellipse([184., 70.], 10., 7.5, 0.2), INK);
-    c.fill(&circle([193., 67.], 3.2), INK);
+    c.fill(&ellipse([168., 46.], 14., 12.5, 0.15), INK);
+    c.fill(&ellipse([180., 52.], 8.5, 6.5, 0.2), INK);
+    c.fill(&circle([188., 49.], 3.), INK);
     // Buck teeth.
-    c.fill(&round_rect(180.5, 74., 9., 8.5, 1.5), INK);
-    c.erase(&rect(182., 76., 2.6, 5.));
-    c.erase(&rect(185.4, 76., 2.6, 5.));
-    // Long ears flopping back, with inner ear lines.
-    c.fill(&ellipse([150., 32.], 6.5, 23., -0.75), INK);
-    c.fill(&ellipse([164., 27.], 6.5, 23., -0.3), INK);
-    c.erase(&ellipse([150., 32.], 2.0, 15., -0.75));
-    c.erase(&ellipse([164., 27.], 2.0, 15., -0.3));
-    // Eye.
-    c.erase(&ellipse([175., 57.], 4.5, 5.5, 0.0));
-    c.fill(&circle([177., 58.], 2.4), INK);
-    // Front paw propping his chin, the other one raised to ring the bell.
+    c.fill(&round_rect(176.5, 56., 8., 7.5, 1.5), INK);
+    c.erase(&rect(178., 58., 2.3, 4.5));
+    c.erase(&rect(181., 58., 2.3, 4.5));
+    // Long ears standing up, tips leaning back, with inner ear lines.
+    c.fill(&ellipse([155., 22.], 5.5, 15., -0.35), INK);
+    c.fill(&ellipse([167., 19.], 5.5, 15., -0.1), INK);
+    c.erase(&ellipse([155., 23.], 1.8, 10., -0.35));
+    c.erase(&ellipse([167., 20.], 1.8, 10., -0.1));
+    // Eye and a cheeky grin.
+    c.erase(&ellipse([172., 42.], 4., 5., 0.0));
+    c.fill(&circle([173.5, 43.], 2.2), INK);
+    c.erase(&stroke(
+        &bezier([174., 55.], [179., 57.], [185., 54.], 5),
+        1.4,
+        1.2,
+    ));
+    // One front paw on his knee, the other raised to ring the bell.
     c.fill(
-        &stroke(&[[150., 96.], [176., 98.], [184., 88.]], 7., 6.),
+        &stroke(&[[150., 64.], [162., 82.], [172., 86.]], 6.5, 5.5),
         INK,
     );
+    c.fill(&ellipse([174., 86.], 4.5, 3.5, 0.0), INK);
     c.fill(
-        &stroke(&[[156., 86.], [204., 88.], [218., 50.]], 7., 6.),
+        &stroke(&[[158., 60.], [192., 64.], [218., 50.]], 7., 6.),
         INK,
     );
     c.fill(&circle([218., 47.], 5.), INK);
@@ -522,9 +567,10 @@ const PRINT_GREEN: Color = hex(0x2e8c62);
 const PRINT_GREEN_DARK: Color = hex(0x1d5e40);
 const PRINT_INK: Color = hex(0x262824);
 const STRAW: Color = hex(0xc6a050);
-const HEN: Color = hex(0xeeebe0);
-const COMB: Color = hex(0xd23a2a);
-const BEAK: Color = hex(0xe08a2a);
+// The hens are printed in the film's own inks so they sit with the henhouses.
+const HEN: Color = hex(0xdedccd);
+const COMB: Color = PRINT_RED;
+const BEAK: Color = STRAW;
 
 /// Draw `f` on a scratch canvas, then copy it mirrored onto the right half too.
 fn both_sides(c: &mut Canvas, f: impl Fn(&mut Canvas)) {
@@ -589,9 +635,15 @@ pub fn background() -> RgbaImage {
         let y = 14.0 + x * 60.0 / 86.0;
         c.fill(&capsule([x, y], [x - 4.0, y + 14.0], 2.4), PRINT_RED);
     }
-    // The plank under the hare and its brace.
-    c.fill(&capsule([78., 106.], [204., 101.], 4.5), PRINT_RED);
-    c.fill(&capsule([96., 106.], [80., 82.], 3.), PRINT_RED);
+    // The plank under the hare: a board nailed to the roof, held up by a knee brace.
+    c.fill(&capsule([80., 106.], [206., 101.], 4.5), PRINT_RED);
+    c.fill(&capsule([84., 113.], [190., 109.], 2.6), PRINT_RED);
+    for x in [110.0f32, 140., 170.] {
+        let y = 106.0 - (x - 80.0) * 5.0 / 126.0;
+        c.fill(&capsule([x, y], [x, y + 6.5], 2.2), PRINT_RED);
+    }
+    c.fill(&capsule([84., 113.], [80., 80.], 4.), PRINT_RED);
+    c.fill(&capsule([118., 110.], [82., 88.], 3.), PRINT_RED);
     // Top right: a tree.
     bush(
         &mut c,
